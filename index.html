@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Development Area</title>
+	<!-- ALL CSS FILES  -->
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="assets/css/style.css">
+	<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+	
+	
+	<!-- LogIn Form -->
+	<div id="root">
+
+	<div class="wrap shadow">
+		<div class="card">
+			<div class="card-body">
+				<h2>Add New User</h2>
+				
+					<div class="form-group">
+						<input v-model="user.name" placeholder="Name" class="form-control" type="text">
+					</div>
+					<div class="form-group">
+						<input v-model="user.email" placeholder="Email" class="form-control" type="text">
+					</div>
+					<div class="form-group">
+						<input v-model="user.cell" placeholder="Cell" class="form-control" type="text">
+					</div>
+					<div class="form-group">
+						<input v-model="user.uname" placeholder="Username" class="form-control" type="text">
+					</div>
+					<div class="form-group">
+						<input ref="file" type="file">
+					</div>
+					<div class="form-group">
+						<input @click="addNewUser" class="btn btn-primary" type="submit" value="Add">
+					</div>
+				
+			</div>
+		</div>
+	</div> 
+
+
+
+	<!-- Table -->
+
+
+	
+		<div class="wrap-table ">
+			<div class="card shadow">
+				<div class="card-body">
+					<h2>All Users</h2>
+					
+					<input v-model="search" @keyup="searchUser" class="float-right mb-3" type="text" placeholder="search user">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>No</th>
+								<th>Name</th>
+								<th>Email</th>
+								<th>Cell</th>
+								<th>Photo</th>
+								<th>Uname</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+	
+	
+							<tr v-for="(user, i) in users">
+								<td>{{ i+1 }}</td>
+								<td>{{ user.name }}</td> 
+								<td>{{ user.email }}</td>
+								<td>{{ user.cell }}</td>
+								<td><img :src="'photos/users/' + user.photo" alt=""></td>
+								<td>{{ user.username }}</td>
+								<td>
+									<a @click="singleUserProfile(user.id)" class="btn btn-sm btn-info" data-toggle='modal' href="#single_user">View</a>
+									<a class="btn btn-sm btn-warning" href="">Edit</a>
+									<a @click="deleteUser(user.id, $event)" class="btn btn-sm btn-danger" href="">Delete</a>
+								</td>
+							</tr>
+	
+					
+							
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+
+			<!-- Single User Modal -->
+	<div id="single_user" class="modal fade">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-body">
+					<img style="width: 200px; height: 200px; border:10px solid #fff; border-radius: 50%; display: block; margin: auto;" :src="'photos/users/' + single_user.photo" class="shadow" alt="">
+					<h2>{{ single_user.name }}</h2>
+					<table class="table table-striped">
+						<tr>
+							<td>Name</td>
+							<td>{{ single_user.name }}</td>
+						</tr>
+
+						<tr>
+							<td>Email</td>
+							<td>{{ single_user.email }}</td>
+						</tr>
+
+						<tr>
+							<td>Cell</td>
+							<td>{{ single_user.cell }}</td>
+						</tr>
+
+						<tr>
+							<td>User Name</td>
+							<td>{{ single_user.uname }}</td>
+						</tr>
+
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	</div>
+
+	
+
+	<br>
+	<br>
+	<br>
+	<br>
+
+ 
+
+
+
+
+
+	<!-- JS FILES  -->
+
+	<script src="assets/js/jquery-3.4.1.min.js"></script>
+	<script src="assets/js/axios.min.js"></script>
+	<script src="assets/js/popper.min.js"></script>
+	<script src="assets/js/bootstrap.min.js"></script>
+
+	<!-- VUE JS FILES  -->
+	<script src="assets/js/vue.js"></script>
+	<script src="assets/js/vue-router.js"></script>
+
+	<script>
+		const root = new Vue({
+			el: '#root',
+			data:{
+				users:[],
+				user:{
+					name:"",
+					email: "",
+					cell: "" ,
+					uname: "",
+					photo: ""
+				},
+				single_user:{
+					name:"",
+					email:"",
+					cell: "" ,
+					uname: "",
+					photo: ""
+				}, 
+				search: ""
+
+			},
+			methods: {
+				
+				getAllUsers: function(){
+					axios.get('inc/user.php?action=read').then(function(response){
+						root.users = response.data;
+					});
+				},
+
+				// Add New User
+				addNewUser: function(){
+
+					if(this.user.name == "" || this.user.email == "" || this.user.username == ""){
+						alert('Required All Feilds');
+					}else{
+
+						this.user.photo = root.$refs.file.files[0];
+
+						let userData = new FormData();
+
+						userData.append('name', this.user.name);
+						userData.append('email', this.user.email);
+						userData.append('cell', this.user.cell);
+						userData.append('uname', this.user.uname);
+						userData.append('photo', this.user.photo);
+
+
+						axios.post('inc/user.php?action=create', userData,{
+							header: {
+								'Content-Type': 'multipart/form-data'
+							}
+						}).then(function(response){
+							
+						console.log(response.data);
+
+						root.user.name = null,
+						root.user.email = null,
+						root.user.cell = null,
+						root.user.uname = null
+
+						root.getAllUsers();
+						});
+					}
+
+				},
+
+				// Data Delete
+				deleteUser: function(id, event){
+
+					event.preventDefault();
+
+					$con = confirm('are you sure ?');
+
+					if($con == true){
+						axios.get('inc/user.php?action=delete&id='+ id).then(function(response){
+							console.log(response.data);
+							root.getAllUsers();
+						});
+					}else{
+						alert('your data is safe');
+					}
+
+
+
+				},
+
+				// Show single user modal
+				singleUserProfile: function(id){
+					
+					axios.get('inc/user.php?action=single&id=' + id).then(function(response){
+						console.log(response.data);
+
+						root.single_user.name 	= response.data.name;
+						root.single_user.email 	= response.data.email;
+						root.single_user.cell 	= response.data.cell;
+						root.single_user.uname 	= response.data.username;
+						root.single_user.photo 	= response.data.photo;
+					});
+
+				},
+
+				// User data search 
+				searchUser: function(){
+
+					let search_text = this.search;
+
+					axios.get('inc/user.php?action=search&s=' + search_text).then(function(response){
+						root.users = response.data;
+					});
+
+
+				}
+
+			},
+
+			
+			created: function(){
+				this.testData();
+			}
+		});
+	</script>
+
+</body>
+</html>
